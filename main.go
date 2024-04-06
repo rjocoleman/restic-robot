@@ -46,8 +46,8 @@ type stats struct {
 	filesChanged    int
 	filesUnmodified int
 	filesProcessed  int
-	bytesAdded      int
-	bytesProcessed  int
+	bytesAdded      int64
+	bytesProcessed  int64
 }
 
 func main() {
@@ -160,8 +160,8 @@ func (b *backup) Run() {
 		zap.Int("filesChanged", statistics.filesChanged),
 		zap.Int("filesUnmodified", statistics.filesUnmodified),
 		zap.Int("filesProcessed", statistics.filesProcessed),
-		zap.Int("bytesAdded", statistics.bytesAdded),
-		zap.Int("bytesProcessed", statistics.bytesProcessed),
+		zap.Int64("bytesAdded", statistics.bytesAdded),
+		zap.Int64("bytesProcessed", statistics.bytesProcessed),
 	)
 
 	// indicate backup success
@@ -195,7 +195,7 @@ func extractStats(s string) (result stats, err error) {
 	amount, _ := strconv.ParseFloat(addedBytes[0][1], 64) //nolint:errcheck
 	// restic doesn't use a comma to denote thousands
 	amount *= 1000
-	result.bytesAdded = convert(int(amount), addedBytes[0][2])
+	result.bytesAdded = convert(int64(amount), addedBytes[0][2])
 
 	filesProcessed := matchProcessed.FindAllStringSubmatch(s, -1)
 	if len(filesProcessed[0]) != 4 {
@@ -205,12 +205,12 @@ func extractStats(s string) (result stats, err error) {
 	result.filesProcessed, _ = strconv.Atoi(filesProcessed[0][1]) //nolint:errcheck
 	amount, _ = strconv.ParseFloat(filesProcessed[0][2], 64)      //nolint:errcheck
 	amount *= 1000
-	result.bytesProcessed = convert(int(amount), filesProcessed[0][3])
+	result.bytesProcessed = convert(int64(amount), filesProcessed[0][3])
 
 	return
 }
 
-func convert(b int, unit string) (result int) {
+func convert(b int64, unit string) (result int64) {
 	switch unit {
 	case "TiB":
 		result = b * (1 << 40)
